@@ -1,93 +1,67 @@
 import os
 import json
-import numpy as np
 import pandas as pd
+import pytest
 from src.train import train
 
-
-FEATURE_NAMES = [
-    "fixed_acidity", "volatile_acidity", "citric_acid", "residual_sugar",
-    "chlorides", "free_sulfur_dioxide", "total_sulfur_dioxide", "density",
-    "pH", "sulphates", "alcohol", "wine_type",
-]
-
-
 def _make_temp_data(tmp_path):
-    """
-    Tao dataset nho voi cung schema Wine Quality de su dung trong test.
-
-    pytest cung cap `tmp_path` la mot thu muc tam thoi, tu dong xoa sau khi test ket thuc.
-    Ham nay dung du lieu ngau nhien nen khong can ket noi GCS hay tai file CSV thuc.
-    """
-    rng = np.random.default_rng(0)
-    n = 200
-
-    # TODO 1: Tao mang X co kich thuoc (n, len(FEATURE_NAMES)) voi gia tri [0, 1)
-    # X = rng.random((n, len(FEATURE_NAMES)))
-
-    # TODO 2: Tao mang y gom n phan tu nguyen ngau nhien trong [0, 3)
-    # y = rng.integers(0, 3, size=n)
-
-    # TODO 3: Xay dung DataFrame, them cot "target"
-    # df = pd.DataFrame(X, columns=FEATURE_NAMES)
-    # df["target"] = y
-
-    # TODO 4: Luu 160 dong dau lam tap huan luyen, 40 dong cuoi lam tap danh gia
-    # train_path = str(tmp_path / "train.csv")
-    # eval_path  = str(tmp_path / "eval.csv")
-    # df.iloc[:160].to_csv(train_path, index=False)
-    # df.iloc[160:].to_csv(eval_path,  index=False)
-
-    # TODO 5: Tra ve (train_path, eval_path)
-    # return train_path, eval_path
-
-    pass  # xoa dong nay sau khi hoan thanh tat ca TODO ben tren
+    train_path = tmp_path / "train.csv"
+    eval_path = tmp_path / "eval.csv"
+    
+    df_train = pd.DataFrame({
+        "fixed_acidity": [7.4, 7.8],
+        "volatile_acidity": [0.7, 0.88],
+        "citric_acid": [0, 0],
+        "residual_sugar": [1.9, 2.6],
+        "chlorides": [0.076, 0.098],
+        "free_sulfur_dioxide": [11, 25],
+        "total_sulfur_dioxide": [34, 67],
+        "density": [0.9978, 0.9968],
+        "pH": [3.51, 3.2],
+        "sulphates": [0.56, 0.68],
+        "alcohol": [9.4, 9.8],
+        "wine_type": [0, 0],
+        "target": [0, 1]
+    })
+    
+    df_eval = df_train.copy()
+    
+    df_train.to_csv(train_path, index=False)
+    df_eval.to_csv(eval_path, index=False)
+    
+    return str(train_path), str(eval_path)
 
 
 def test_train_returns_float(tmp_path):
-    """Kiem tra ham train() tra ve mot so thuc nam trong [0.0, 1.0]."""
     train_path, eval_path = _make_temp_data(tmp_path)
-
-    # TODO 6: Goi ham train() voi sieu tham so nho (n_estimators=10, max_depth=3)
-    # va cac duong dan file vua tao
-    # acc = train({"n_estimators": 10, "max_depth": 3}, ...)
-
-    # TODO 7: Kiem tra ket qua
-    # assert isinstance(acc, float)
-    # assert 0.0 <= acc <= 1.0
-
-    pass  # xoa dong nay sau khi hoan thanh tat ca TODO ben tren
+    res = train(
+        {"n_estimators": 10, "max_depth": 3},
+        data_path=train_path,
+        eval_path=eval_path,
+    )
+    assert isinstance(res, float)
+    assert 0.0 <= res <= 1.0
 
 
 def test_metrics_file_created(tmp_path):
-    """Kiem tra file outputs/metrics.json duoc tao sau khi huan luyen."""
     train_path, eval_path = _make_temp_data(tmp_path)
     train(
         {"n_estimators": 10, "max_depth": 3},
         data_path=train_path,
         eval_path=eval_path,
     )
-
-    # TODO 8: Kiem tra file ton tai va noi dung dung dinh dang
-    # assert os.path.exists("outputs/metrics.json")
-    # with open("outputs/metrics.json") as f:
-    #     metrics = json.load(f)
-    # assert "accuracy" in metrics
-    # assert "f1_score" in metrics
-
-    pass  # xoa dong nay sau khi hoan thanh tat ca TODO ben tren
+    assert os.path.exists("outputs/metrics.json")
+    with open("outputs/metrics.json", "r") as f:
+        metrics = json.load(f)
+    assert "accuracy" in metrics
+    assert "f1_score" in metrics
 
 
 def test_model_file_created(tmp_path):
-    """Kiem tra file models/model.pkl duoc tao sau khi huan luyen."""
     train_path, eval_path = _make_temp_data(tmp_path)
     train(
         {"n_estimators": 10, "max_depth": 3},
         data_path=train_path,
         eval_path=eval_path,
     )
-
-    # TODO 9: Kiem tra file model ton tai
-    # assert os.path.exists("models/model.pkl")
-
-    pass  # xoa dong nay sau khi hoan thanh tat ca TODO ben tren
+    assert os.path.exists("models/model.pkl")
